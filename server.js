@@ -52,6 +52,11 @@ io.on('connection', (socket) => {
     console.log(`📢 Updated player list sent for room: ${roomId}`);
   });
 
+  socket.on('get_rooms', () => {
+  const roomIds = Object.keys(rooms); // get all room names
+  socket.emit('room_list', roomIds);
+});
+
   // When a player plays a card
   socket.on('play_card', ({ roomId, card, playerId }) => {
     const room = rooms[roomId];
@@ -70,6 +75,7 @@ io.on('connection', (socket) => {
       currentTurnIndex: room.currentTurnIndex,
     });
   });
+
 
   // Player disconnects
   socket.on('disconnect', () => {
