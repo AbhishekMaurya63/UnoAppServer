@@ -52,8 +52,9 @@ io.on('connection', (socket) => {
     console.log(`📢 Updated player list sent for room: ${roomId}`);
   });
 
-  socket.on('get_rooms', () => {
-  const roomIds = Object.keys(rooms); // get all room names
+socket.on('get_rooms', () => {
+  console.log("📢 get_rooms called by", socket.id);
+  const roomIds = Object.keys(rooms);
   socket.emit('room_list', roomIds);
 });
 
