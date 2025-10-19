@@ -24,34 +24,26 @@ io.on('connection', (socket) => {
   console.log(`✅ Connection successful for socket: ${socket.id}`);
 
   // When a player joins a room
-  socket.on('join_room', ({ roomId, playerName }) => {
-    console.log(`🟢 ${playerName} joined room: ${roomId}`);
-
+socket.on('join_room', ({ roomId, roomName, playerName }) => {
     // Create room if it doesn't exist
     if (!rooms[roomId]) {
       rooms[roomId] = {
+        name: roomName, // store the display name
         players: [],
         currentTurnIndex: 0,
         topCard: null,
       };
-      console.log(`📦 Room created: ${roomId}`);
+      console.log(`📦 Room created: ${roomName} (${roomId})`);
     }
 
-    // Avoid duplicate players
+    // Add player if not already present
     if (!rooms[roomId].players.some(p => p.id === socket.id)) {
       rooms[roomId].players.push({ id: socket.id, name: playerName, hand: [] });
-      console.log(`➕ Player added: ${playerName} (${socket.id}) to room ${roomId}`);
+      console.log(`➕ Player added: ${playerName} to room ${rooms[roomId].name}`);
     }
 
-    // Join Socket.IO room
     socket.join(roomId);
-    console.log(`🏠 Socket ${socket.id} joined Socket.IO room: ${roomId}`);
-
-    // Broadcast updated player list in this room
     io.to(roomId).emit('update_players', rooms[roomId].players);
-
-    // Broadcast updated room list to all clients
-    io.emit('room_list', Object.keys(rooms));
   });
 
   // When a player plays a card
@@ -76,8 +68,9 @@ io.on('connection', (socket) => {
   // Handle client requesting room list manually
   socket.on('get_rooms', () => {
     console.log("📢 get_rooms called by", socket.id);
-    const roomIds = Object.keys(rooms);
-    socket.emit('room_list', roomIds);
+    const roomList = Object.values(rooms).map(r => r.name);
+    socket.emit('room_list', roomList);
+    console.log("📢 Room list sent:", roomList);
   });
 
   // Player disconnects
