@@ -47,16 +47,12 @@ io.on('connection', (socket) => {
     socket.join(roomId);
     console.log(`🏠 Socket ${socket.id} joined Socket.IO room: ${roomId}`);
 
-    // Broadcast updated player list
+    // Broadcast updated player list in this room
     io.to(roomId).emit('update_players', rooms[roomId].players);
-    console.log(`📢 Updated player list sent for room: ${roomId}`);
-  });
 
-socket.on('get_rooms', () => {
-  console.log("📢 get_rooms called by", socket.id);
-  const roomIds = Object.keys(rooms);
-  socket.emit('room_list', roomIds);
-});
+    // Broadcast updated room list to all clients
+    io.emit('room_list', Object.keys(rooms));
+  });
 
   // When a player plays a card
   socket.on('play_card', ({ roomId, card, playerId }) => {
@@ -77,6 +73,12 @@ socket.on('get_rooms', () => {
     });
   });
 
+  // Handle client requesting room list manually
+  socket.on('get_rooms', () => {
+    console.log("📢 get_rooms called by", socket.id);
+    const roomIds = Object.keys(rooms);
+    socket.emit('room_list', roomIds);
+  });
 
   // Player disconnects
   socket.on('disconnect', () => {
@@ -90,6 +92,13 @@ socket.on('get_rooms', () => {
       if (removed.length > 0) {
         console.log(`🗑 Removed player(s) from room ${roomId}:`, removed);
         io.to(roomId).emit('update_players', room.players);
+      }
+
+      // Delete empty rooms
+      if (room.players.length === 0) {
+        delete rooms[roomId];
+        console.log(`🗑 Room deleted: ${roomId}`);
+        io.emit('room_list', Object.keys(rooms)); // notify all clients
       }
     }
   });
